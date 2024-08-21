@@ -9,7 +9,5 @@ bin-int/
 *.vcxproj.filters
 *.sln
 
-imgui.ini
-
 # Exclude
 !vendor/bin
