@@ -1,5 +1,15 @@
 #include "Renderer.h"
 
+#include "Constants.h"
+
+namespace constants {
+	namespace scene {
+		extern glm::vec3 g_sphereColor = { 1, 0.5, 0.25 };
+		extern glm::vec3 g_spherePos = { 0, 0, -1 };
+		extern glm::vec3 g_lightPos = { -1, -1, 0.5 };
+	}
+}
+
 void Renderer::onResize(glm::ivec2 size) {
 	bool changed = false;
 
@@ -93,19 +103,31 @@ std::shared_ptr<Walnut::Image> Renderer::GetFinalImage() const {
 /// so we can conclude that this ray hits the sphere twice
 /// 
 glm::vec4 Renderer::pixel(glm::vec2 coord) const {
-	glm::vec3 origin(0, 0, -2);
+	glm::vec3 origin = constants::scene::g_spherePos;
 
 	glm::vec3 dir(coord, 1);
 
-	float size = 1;
+	float size = 0.5;
 
 	float a = glm::dot(dir, dir);
 	float b = 2.0f * glm::dot(origin, dir);
 	float c = glm::dot(origin, origin) - size * size;
 
 	float discriminant = b * b - 4.0f * a * c;
-	if (discriminant >= 0.0f)
-		return glm::vec4(1);
+	if (discriminant < 0.0f)
+		return glm::vec4(0, 0, 0, 1);
+	float distance = (-b - glm::sqrt(discriminant)) / (2 * a);
 
-	return glm::vec4(0, 0, 0, 1);
+	glm::vec3 hitpos = (origin + dir * distance);
+	glm::vec3 normal = hitpos / size; // simplified because of sphere
+
+	glm::vec3 lightDir = glm::normalize(constants::scene::g_lightPos);
+
+	float lightIntensity = glm::max(glm::dot(normal, -lightDir), 0.0f);
+
+	glm::vec3 color = constants::scene::g_sphereColor;
+
+	color *= lightIntensity;
+
+	return glm::vec4(color, 1);
 }
