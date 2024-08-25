@@ -7,23 +7,26 @@
 #include "Walnut/Input/Input.h"
 
 #include "Renderer.h"
+#include "Storage.h"
 #include <glm/gtc/type_ptr.hpp>
-
-#include "Constants.h"
 
 namespace constants {
 	namespace settings {
-		extern bool g_showSettings = true;
-		extern bool g_showViewport = true;
-		extern bool g_showDemo = false;
+		bool g_showSettings = true;
+		bool g_showViewport = true;
+		bool g_showDemo = false;
 	}
 }
+
+extern glm::vec3 g_lightPos;
 
 Walnut::Application* g_application;
 
 class RaytraceLayer : public Walnut::Layer {
 public:
 	RaytraceLayer() {
+		scene.spheres.emplace_back() = { glm::vec3(0, 0, -10), 0.5, glm::vec4(1, 0.5, 0.25, 1) };
+		scene.spheres.emplace_back() = {glm::vec3(0, 0, -9), 0.5, glm::vec4(0.25, 0, 1, 1)};
 	}
 
 	virtual void OnUIRender() override {
@@ -34,15 +37,31 @@ public:
 
 		if (constants::settings::g_showSettings) {
 			ImGui::Begin("settings", &constants::settings::g_showSettings);
-			ImGui::Text("Last render: %.3fms", lastRenderTime);
+			ImGui::Text("Last render: %.3fms", frameTime);
 			ImGui::SameLine();
 			ImGui::Checkbox("render", &shouldRender);
 
+			if (ImGui::Button("add sphere"))
+				scene.spheres.emplace_back();
+
 			ImGui::Separator();
-			ImGui::DragFloat3("sphere pos", glm::value_ptr(constants::scene::g_spherePos), 0.01, -2, 2);
-			ImGui::ColorEdit3("sphere color", glm::value_ptr(constants::scene::g_sphereColor), ImGuiColorEditFlags_Float);
+
+			for (size_t i = 0; i < scene.spheres.size(); i++) {
+				Storage::Sphere& current = scene.spheres[i];
+
+				ImGui::PushID(i);
+
+				ImGui::DragFloat3("sphere pos", glm::value_ptr(current.pos), 0.01, -20, 20);
+				ImGui::DragFloat("radius", &current.radius, 0.01, 0, 10);
+				ImGui::ColorEdit3("sphere color", glm::value_ptr(current.color), ImGuiColorEditFlags_Float);
+
+				ImGui::Separator();
+				ImGui::PopID();
+			}
+
+			ImGui::DragFloat3("light pos", glm::value_ptr(g_lightPos), 0.01, -2, 2);
 			ImGui::Separator();
-			ImGui::DragFloat3("light pos", glm::value_ptr(constants::scene::g_lightPos), 0.01, -2, 2);
+
 			ImGui::End();
 		}
 
@@ -66,19 +85,20 @@ public:
 		Walnut::Timer timer;
 		if (shouldRender)
 			render();
-		lastRenderTime = timer.ElapsedMillis();
+		frameTime = timer.ElapsedMillis();
 	}
 
 	void render() {
 		renderer.onResize({viewportSize.x, viewportSize.y});
-		renderer.render();
+		renderer.render(scene);
 	}
 
 private:
 	Renderer renderer;
+	Storage::Scene scene;
 
 	ImVec2 viewportSize = {0, 0};
-	float lastRenderTime = 0;
+	float frameTime = 0;
 };
 
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv) {
