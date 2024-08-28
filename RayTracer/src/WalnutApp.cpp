@@ -8,8 +8,8 @@
 
 #include "Renderer.h"
 #include "Storage.h"
-#include "camera/PerspectiveCam.h"
-#include "camera/OrthoCam.h"
+#include "camera/CamController.h"
+
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
@@ -27,15 +27,16 @@ Walnut::Application* g_application;
 
 class RaytraceLayer : public Walnut::Layer {
 public:
-	RaytraceLayer() : viewportSize(0, 0), camera(new Camera::PerspectiveCam(45, 0.001f, 100, viewportSize.x, viewportSize.y)), frameTime(0) {
-		scene.spheres.emplace_back() = {glm::vec3(0, 0, -10), 0.5, glm::vec4(1, 0.5, 0.25, 1)};
-		scene.spheres.emplace_back() = {glm::vec3(-0.5, -0.5, 5.5), 1, glm::vec4(0.25, 0, 1, 1)};
-		camera->setPosition({0, 0, 6});
-		camera->setFacing({0, 0, -1});
+	RaytraceLayer() : viewportSize(0, 0), camera(), frameTime(0) {
+		scene.spheres.emplace_back() = {glm::vec3(0, 0, -2), 0.5, glm::vec4(1, 0.5, 0.25, 1)};
+		scene.spheres.emplace_back() = {glm::vec3(-0.5, -0.5, -3), 1, glm::vec4(0.25, 0, 1, 1)};
+		camera.setCamera<Camera::PerspectiveCam>(45.0f, 0.001f, 100.0f, viewportSize.x, viewportSize.y);
+		camera.setPosition({0, 0, 0});
+		camera.setFacing({0, 0, -1});
 	}
 
-	~RaytraceLayer() {
-		delete camera;
+	virtual void OnUpdate(float deltaTime) override {
+		camera.update(deltaTime);
 	}
 
 	virtual void OnUIRender() override {
@@ -50,14 +51,14 @@ public:
 			ImGui::SameLine();
 			ImGui::Checkbox("render", &shouldRender);
 
-			glm::vec3 camPos = camera->getPosition();
-			glm::vec3 camLookDir = camera->getFacing();
+			//glm::vec3 camPos = camera->getPosition();
+			//glm::vec3 camLookDir = camera->getFacing();
 
-			if (ImGui::DragFloat3("camera position", glm::value_ptr(camPos)))
-				camera->setPosition(camPos);
-				
-			if (ImGui::DragFloat3("camera looking direction", glm::value_ptr(camLookDir), 0.01f, 0, 1))
-				camera->setFacing(camLookDir);
+			//if (ImGui::DragFloat3("camera position", glm::value_ptr(camPos)))
+			//	camera->setPosition(camPos);
+			//	
+			//if (ImGui::DragFloat3("camera looking direction", glm::value_ptr(camLookDir), 0.01f, 0, 1))
+			//	camera->setFacing(camLookDir);
 
 			ImGui::Separator();
 
@@ -109,9 +110,9 @@ public:
 	}
 
 	void render() {
-		camera->setSize(viewportSize.x, viewportSize.y);
+		camera.setSize(viewportSize.x, viewportSize.y);
 		renderer.onResize({viewportSize.x, viewportSize.y});
-		renderer.render(scene, camera);
+		renderer.render(scene, camera.getCamera());
 	}
 
 private:
@@ -119,7 +120,7 @@ private:
 
 	Renderer renderer;
 	Storage::Scene scene;
-	Camera::Cam* camera;
+	Camera::CamController camera;
 
 	float frameTime;
 };

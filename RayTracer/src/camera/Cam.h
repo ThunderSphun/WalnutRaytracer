@@ -24,11 +24,11 @@ namespace Camera {
 
 		const glm::vec3& getPosition();
 		const glm::vec3& getPosition() const;
-		void setPosition(glm::vec3 pos);
+		void setPosition(const glm::vec3& pos);
 
 		const glm::vec3& getFacing();
 		const glm::vec3& getFacing() const;
-		void setFacing(glm::vec3 facing);
+		void setFacing(const glm::vec3& facing);
 
 		void setSize(float width, float height);
 		void setSize(float width, float height, float near, float far);

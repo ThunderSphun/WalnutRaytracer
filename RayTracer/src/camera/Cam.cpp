@@ -1,7 +1,7 @@
 #include "Cam.h"
 
 Camera::Cam::Cam(float near, float far, float width, float height) : nearPlane(near), farPlane(far), size(width, height),
-	projection(0), inverseProjection(glm::inverse(projection)), view(0), inverseView(glm::inverse(view)), position(0), lookdir(0) {
+	projection(1), inverseProjection(glm::inverse(projection)), view(1), inverseView(glm::inverse(view)), position(0), lookdir(0) {
 }
 
 const std::vector<Storage::Ray>& Camera::Cam::getRays() {
@@ -52,7 +52,7 @@ const glm::vec3& Camera::Cam::getPosition() const {
 	return position;
 }
 
-void Camera::Cam::setPosition(glm::vec3 pos) {
+void Camera::Cam::setPosition(const glm::vec3& pos) {
 	if (position == pos)
 		return;
 	position = pos;
@@ -69,9 +69,9 @@ const glm::vec3& Camera::Cam::getFacing() const {
 	return lookdir;
 }
 
-void Camera::Cam::setFacing(glm::vec3 facing) {
-	facing = glm::normalize(facing);
-	if (lookdir == facing)
+void Camera::Cam::setFacing(const glm::vec3& facing) {
+	glm::vec3 nextLookDir= glm::normalize(facing);
+	if (lookdir == nextLookDir)
 		return;
 	lookdir = facing;
 
@@ -80,10 +80,10 @@ void Camera::Cam::setFacing(glm::vec3 facing) {
 }
 
 void Camera::Cam::setSize(float width, float height) {
-	glm::vec2 newSize(width, height);
-	if (size == newSize)
+	glm::vec2 nextSize(width, height);
+	if (size == nextSize)
 		return;
-	size = newSize;
+	size = nextSize;
 
 	calculateProjection();
 	calculateRayCache();
