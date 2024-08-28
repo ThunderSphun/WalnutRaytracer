@@ -1,6 +1,7 @@
 #include "Renderer.h"
+#include <iostream>
 
-glm::vec3 g_lightPos = { -1, -1, 0.5 };
+glm::vec3 g_lightPos = {-2, -0.5, -1};
 
 void Renderer::onResize(glm::ivec2 size) {
 	bool changed = false;
@@ -19,8 +20,19 @@ void Renderer::onResize(glm::ivec2 size) {
 		pixelData = std::make_shared<glm::vec4[]>(resultImage->GetWidth() * resultImage->GetHeight());
 }
 
-void Renderer::render(const Storage::Scene& scene) {
+void Renderer::render(const Storage::Scene& scene, const Camera::Cam* camera) {
 	currentScene = &scene;
+
+	if (camera->getRays().size() != (resultImage->GetWidth() * resultImage->GetHeight())) {
+		std::cerr << "camera has " << camera->getRays().size() << " rays, but needs " << (resultImage->GetWidth() * resultImage->GetHeight()) << "rays" << std::endl;
+	}
+
+	for (size_t i = 0; i < camera->getRays().size(); i++) {
+		pixelData[i] = traceRay(camera->getRays()[i]);
+	}
+
+	resultImage->SetData(pixelData.get());
+	return;
 
 	float ratio = resultImage->GetWidth() / (float) resultImage->GetHeight();
 	for (uint32_t y = 0; y < resultImage->GetHeight(); y++) {

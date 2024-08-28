@@ -16,6 +16,8 @@ project "RayTracer"
       "../Walnut/Walnut/src",
 
       "%{IncludeDir.VulkanSDK}",
+
+      "src",
    }
 
    links

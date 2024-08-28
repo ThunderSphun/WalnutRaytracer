@@ -8,7 +8,10 @@
 
 #include "Renderer.h"
 #include "Storage.h"
+#include "camera/PerspectiveCam.h"
+#include "camera/OrthoCam.h"
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
 namespace constants {
 	namespace settings {
@@ -24,9 +27,15 @@ Walnut::Application* g_application;
 
 class RaytraceLayer : public Walnut::Layer {
 public:
-	RaytraceLayer() {
-		scene.spheres.emplace_back() = { glm::vec3(0, 0, -10), 0.5, glm::vec4(1, 0.5, 0.25, 1) };
-		scene.spheres.emplace_back() = {glm::vec3(0, 0, -9), 0.5, glm::vec4(0.25, 0, 1, 1)};
+	RaytraceLayer() : viewportSize(0, 0), camera(new Camera::PerspectiveCam(45, 0.001f, 100, viewportSize.x, viewportSize.y)), frameTime(0) {
+		scene.spheres.emplace_back() = {glm::vec3(0, 0, -10), 0.5, glm::vec4(1, 0.5, 0.25, 1)};
+		scene.spheres.emplace_back() = {glm::vec3(-0.5, -0.5, 5.5), 1, glm::vec4(0.25, 0, 1, 1)};
+		camera->setPosition({0, 0, 6});
+		camera->setFacing({0, 0, -1});
+	}
+
+	~RaytraceLayer() {
+		delete camera;
 	}
 
 	virtual void OnUIRender() override {
@@ -41,6 +50,17 @@ public:
 			ImGui::SameLine();
 			ImGui::Checkbox("render", &shouldRender);
 
+			glm::vec3 camPos = camera->getPosition();
+			glm::vec3 camLookDir = camera->getFacing();
+
+			if (ImGui::DragFloat3("camera position", glm::value_ptr(camPos)))
+				camera->setPosition(camPos);
+				
+			if (ImGui::DragFloat3("camera looking direction", glm::value_ptr(camLookDir), 0.01f, 0, 1))
+				camera->setFacing(camLookDir);
+
+			ImGui::Separator();
+
 			if (ImGui::Button("add sphere"))
 				scene.spheres.emplace_back();
 
@@ -49,17 +69,17 @@ public:
 			for (size_t i = 0; i < scene.spheres.size(); i++) {
 				Storage::Sphere& current = scene.spheres[i];
 
-				ImGui::PushID(i);
+				ImGui::PushID((int) i);
 
-				ImGui::DragFloat3("sphere pos", glm::value_ptr(current.pos), 0.01, -20, 20);
-				ImGui::DragFloat("radius", &current.radius, 0.01, 0, 10);
+				ImGui::DragFloat3("sphere pos", glm::value_ptr(current.pos), 0.01f, -20, 20);
+				ImGui::DragFloat("radius", &current.radius, 0.01f, 0, 10);
 				ImGui::ColorEdit3("sphere color", glm::value_ptr(current.color), ImGuiColorEditFlags_Float);
 
 				ImGui::Separator();
 				ImGui::PopID();
 			}
 
-			ImGui::DragFloat3("light pos", glm::value_ptr(g_lightPos), 0.01, -2, 2);
+			ImGui::DragFloat3("light pos", glm::value_ptr(g_lightPos), 0.01f, -2, 2);
 			ImGui::Separator();
 
 			ImGui::End();
@@ -89,16 +109,19 @@ public:
 	}
 
 	void render() {
+		camera->setSize(viewportSize.x, viewportSize.y);
 		renderer.onResize({viewportSize.x, viewportSize.y});
-		renderer.render(scene);
+		renderer.render(scene, camera);
 	}
 
 private:
+	ImVec2 viewportSize;
+
 	Renderer renderer;
 	Storage::Scene scene;
+	Camera::Cam* camera;
 
-	ImVec2 viewportSize = {0, 0};
-	float frameTime = 0;
+	float frameTime;
 };
 
 Walnut::Application* Walnut::CreateApplication(int argc, char** argv) {

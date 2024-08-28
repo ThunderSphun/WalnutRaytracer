@@ -2,6 +2,7 @@
 
 #include <Walnut/Image.h>
 #include "Storage.h"
+#include "camera/Cam.h"
 #include <glm/glm.hpp>
 #include <memory>
 
@@ -10,7 +11,7 @@ public:
 	Renderer() = default;
 
 	void onResize(glm::ivec2 size);
-	void render(const Storage::Scene& scene);
+	void render(const Storage::Scene& scene, const Camera::Cam* camera);
 
 	std::shared_ptr<Walnut::Image> GetFinalImage() const;
 
