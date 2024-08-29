@@ -1,6 +1,8 @@
 #include "CamController.h"
 
 #include "Walnut/Input/Input.h"
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/string_cast.hpp>
 
 static constexpr glm::vec3 zero(0);
 
@@ -8,7 +10,7 @@ Camera::CamController::CamController() : CamController(1, 1) {
 }
 
 Camera::CamController::CamController(float moveSpeed, float rotSpeed) :
-	moveSpeed(moveSpeed), rotSpeed(rotSpeed), hasFov(false), camera(nullptr) {
+	moveSpeed(moveSpeed), rotSpeed(rotSpeed), hasFov(false), camera(nullptr), prevMousePos(0) {
 }
 
 Camera::CamController::~CamController() {
@@ -20,11 +22,19 @@ const Camera::Cam* Camera::CamController::getCamera() {
 }
 
 void Camera::CamController::update(float deltaTime) {
+	glm::vec2 mousePos = Walnut::Input::GetMousePosition();
+	glm::vec2 mouseDelta = (mousePos - prevMousePos) * 0.2f;
+	prevMousePos = mousePos;
+
 	if (!camera)
 		return;
 
-	updatePosition(deltaTime);
-	updateRotation(deltaTime);
+	if (Walnut::Input::IsMouseButtonDown(Walnut::MouseButton::Right)) {
+		Walnut::Input::SetCursorMode(Walnut::CursorMode::Locked);
+		updatePosition(deltaTime);
+		updateRotation(mouseDelta, deltaTime);
+	} else
+		Walnut::Input::SetCursorMode(Walnut::CursorMode::Normal);
 }
 
 #pragma region getter & setter
@@ -96,14 +106,14 @@ void Camera::CamController::updatePosition(float deltaTime) {
 		movedDir.z--;
 
 	if (Walnut::Input::IsKeyDown(Walnut::KeyCode::A))
-		movedDir.x--;
-	if (Walnut::Input::IsKeyDown(Walnut::KeyCode::D))
 		movedDir.x++;
+	if (Walnut::Input::IsKeyDown(Walnut::KeyCode::D))
+		movedDir.x--;
 
 	if (Walnut::Input::IsKeyDown(Walnut::KeyCode::Space))
-		movedDir.y--;
-	if (Walnut::Input::IsKeyDown(Walnut::KeyCode::LeftShift))
 		movedDir.y++;
+	if (Walnut::Input::IsKeyDown(Walnut::KeyCode::LeftShift))
+		movedDir.y--;
 
 	if (movedDir == glm::vec3(0))
 		return;
@@ -111,17 +121,22 @@ void Camera::CamController::updatePosition(float deltaTime) {
 	movedDir *= moveSpeed * deltaTime;
 
 	glm::vec3 camPos = camera->getPosition();
-	glm::vec3 camDir = camera->getFacing();
+	Camera::Cam::LookAngles camAngles = camera->getLookAngles();
 
-	const glm::vec3 fakeUp(0, 1, 0);
-	glm::vec3 right = glm::cross(camDir, fakeUp);
-	glm::vec3 up = glm::cross(camDir, right);
+	camPos = camPos + movedDir.x * camAngles.right + movedDir.y * camAngles.up + movedDir.z * camAngles.forward;
 
-	glm::vec3 nextCamPos = camPos + movedDir.x * right + movedDir.y * up + movedDir.z * camDir;
-
-	camera->setPosition(nextCamPos);
+	camera->setPosition(camPos);
 }
 
-void Camera::CamController::updateRotation(float deltaTime) {
+void Camera::CamController::updateRotation(const glm::vec2& mouseDelta, float deltaTime) {
+	if (mouseDelta == glm::vec2(0))
+		return;
 
+	Camera::Cam::LookAngles camAngles = camera->getLookAngles();
+	glm::vec3 facing = camAngles.forward;
+
+	facing = glm::rotate(facing, -mouseDelta.x * rotSpeed * deltaTime, camAngles.up);
+	facing = glm::rotate(facing, mouseDelta.y * rotSpeed * deltaTime, camAngles.right);
+
+	camera->setFacing(facing);
 }

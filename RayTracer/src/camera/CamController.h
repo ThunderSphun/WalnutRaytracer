@@ -48,7 +48,7 @@ namespace Camera {
 
 	private:
 		void updatePosition(float deltaTime);
-		void updateRotation(float deltaTime);
+		void updateRotation(const glm::vec2& mouseDelta, float deltaTime);
 
 	private:
 		float moveSpeed;
@@ -56,5 +56,7 @@ namespace Camera {
 
 		bool hasFov;
 		Cam* camera;
+
+		glm::vec2 prevMousePos;
 	};
 }

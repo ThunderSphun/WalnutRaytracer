@@ -46,6 +46,6 @@ void Camera::PerspectiveCam::calculateProjection() {
 }
 
 void Camera::PerspectiveCam::calculateView() {
-	view = glm::lookAt(position, position + lookdir, glm::vec3(0, 1, 0));
+	view = glm::lookAt(position, position + lookAngles.forward, lookAngles.up);
 	inverseView = glm::inverse(view);
 }

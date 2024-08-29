@@ -1,7 +1,8 @@
 #include "Cam.h"
 
 Camera::Cam::Cam(float near, float far, float width, float height) : nearPlane(near), farPlane(far), size(width, height),
-	projection(1), inverseProjection(glm::inverse(projection)), view(1), inverseView(glm::inverse(view)), position(0), lookdir(0) {
+	projection(1), inverseProjection(glm::inverse(projection)), view(1), inverseView(glm::inverse(view)), position(0),
+	lookAngles(Camera::Cam::LookAngles::fromFacing(glm::vec3(0))) {
 }
 
 const std::vector<Storage::Ray>& Camera::Cam::getRays() {
@@ -62,18 +63,27 @@ void Camera::Cam::setPosition(const glm::vec3& pos) {
 }
 
 const glm::vec3& Camera::Cam::getFacing() {
-	return lookdir;
+	return lookAngles.forward;
 }
 
 const glm::vec3& Camera::Cam::getFacing() const {
-	return lookdir;
+	return lookAngles.forward;
+}
+
+const Camera::Cam::LookAngles& Camera::Cam::getLookAngles() {
+	return lookAngles;
+}
+
+const Camera::Cam::LookAngles& Camera::Cam::getLookAngles() const {
+	return lookAngles;
 }
 
 void Camera::Cam::setFacing(const glm::vec3& facing) {
 	glm::vec3 nextLookDir= glm::normalize(facing);
-	if (lookdir == nextLookDir)
+	if (lookAngles.forward == nextLookDir)
 		return;
-	lookdir = facing;
+
+	lookAngles = Camera::Cam::LookAngles::fromFacing(facing);
 
 	calculateView();
 	calculateRayCache();
@@ -110,4 +120,12 @@ void Camera::Cam::setPlanes(float near, float far) {
 
 	calculateView();
 	calculateRayCache();
+}
+
+const Camera::Cam::LookAngles Camera::Cam::LookAngles::fromFacing(const glm::vec3& facing) {
+	constexpr glm::vec3 fakeUp(0, 1, 0);
+	const glm::vec3 right = glm::cross(facing, fakeUp);
+	const glm::vec3 up = glm::cross(facing, right);
+
+	return {facing, up, right};
 }

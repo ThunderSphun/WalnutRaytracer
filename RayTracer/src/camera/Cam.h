@@ -7,6 +7,16 @@
 namespace Camera {
 	class Cam {
 	public:
+		struct LookAngles {
+		public:
+			static const LookAngles fromFacing(const glm::vec3& facing);
+
+		public:
+			glm::vec3 forward;
+			glm::vec3 up;
+			glm::vec3 right;
+		};
+
 		Cam(float near, float far, float width, float height);
 
 		const std::vector<Storage::Ray>& getRays();
@@ -28,6 +38,8 @@ namespace Camera {
 
 		const glm::vec3& getFacing();
 		const glm::vec3& getFacing() const;
+		const LookAngles& getLookAngles();
+		const LookAngles& getLookAngles() const;
 		void setFacing(const glm::vec3& facing);
 
 		void setSize(float width, float height);
@@ -47,7 +59,7 @@ namespace Camera {
 		glm::mat4 inverseView;
 
 		glm::vec3 position;
-		glm::vec3 lookdir;
+		LookAngles lookAngles;
 
 		glm::vec2 size;
 		float nearPlane;
