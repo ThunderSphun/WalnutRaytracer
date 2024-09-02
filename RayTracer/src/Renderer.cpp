@@ -23,13 +23,13 @@ void Renderer::onResize(glm::ivec2 size) {
 void Renderer::render(const Storage::Scene& scene, const Camera::Cam* camera) {
 	currentScene = &scene;
 
-	if (camera->getRays().size() != (resultImage->GetWidth() * resultImage->GetHeight())) {
-		std::cerr << "camera has " << camera->getRays().size() << " rays, but needs " << (resultImage->GetWidth() * resultImage->GetHeight()) << "rays" << std::endl;
-	}
+	if (camera->getRays().size() != (resultImage->GetWidth() * resultImage->GetHeight()))
+		std::cerr << "camera has " << camera->getRays().size() << " rays, but needs " << (resultImage->GetWidth() * resultImage->GetHeight()) << " rays" << std::endl;
 
-	for (size_t i = 0; i < camera->getRays().size(); i++) {
-		pixelData[i] = traceRay(camera->getRays()[i]);
-	}
+	const std::vector<Storage::Ray>& rays = camera->getRays();
+
+	for (size_t i = 0; i < rays.size(); i++)
+		pixelData[i] = traceRay(rays[i]);
 
 	resultImage->SetData(pixelData.get());
 	return;
@@ -143,12 +143,14 @@ glm::vec4 Renderer::traceRay(const Storage::Ray& ray) const {
 	glm::vec3 hitpos = (origin + ray.direction * recordDistance);
 	glm::vec3 normal = hitpos / sphere.radius; // simplified because of sphere
 
-	glm::vec4 color = sphere.color;
+	glm::vec4 albedo = sphere.albedo;
 
 	glm::vec3 lightDir = glm::normalize(g_lightPos);
 	float lightIntensity = glm::max(glm::dot(normal, -lightDir), 0.0f);
 
-	color *= lightIntensity;
+	albedo *= lightIntensity;
 
-	return glm::vec4(color.r, color.g, color.b, 1);
+	albedo.a = 1;
+
+	return albedo;
 }

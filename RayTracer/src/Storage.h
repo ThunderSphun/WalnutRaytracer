@@ -9,7 +9,7 @@ namespace Storage {
 	struct Sphere {
 		glm::vec3 pos;
 		float radius;
-		glm::vec4 color;
+		glm::vec4 albedo;
 	};
 
 	struct Scene {

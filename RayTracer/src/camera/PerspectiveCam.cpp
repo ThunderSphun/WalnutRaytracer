@@ -24,7 +24,7 @@ void Camera::PerspectiveCam::setFov(float fovY) {
 }
 
 void Camera::PerspectiveCam::calculateRayCache() {
-	rayCache.resize((int) size.x * (int) size.y);
+	rayCache.resize((size_t) size.x * (size_t) size.y);
 
 	for (size_t y = 0; y < size.y; y++) {
 		for (size_t x = 0; x < size.x; x++) {
@@ -41,6 +41,8 @@ void Camera::PerspectiveCam::calculateRayCache() {
 }
 
 void Camera::PerspectiveCam::calculateProjection() {
+	if(size.y == 0)
+		return;
 	projection = glm::perspective(glm::radians(fov), size.x / size.y, nearPlane, farPlane);
 	inverseProjection = glm::inverse(projection);
 }

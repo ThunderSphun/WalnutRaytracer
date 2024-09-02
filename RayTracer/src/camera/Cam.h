@@ -18,6 +18,7 @@ namespace Camera {
 		};
 
 		Cam(float near, float far, float width, float height);
+		virtual ~Cam() = default;
 
 		const std::vector<Storage::Ray>& getRays();
 		const std::vector<Storage::Ray>& getRays() const;
@@ -42,6 +43,10 @@ namespace Camera {
 		const LookAngles& getLookAngles() const;
 		void setFacing(const glm::vec3& facing);
 
+		const glm::vec2& getSize();
+		const glm::vec2& getSize() const;
+		const glm::vec2& getPlanes();
+		const glm::vec2& getPlanes() const;
 		void setSize(float width, float height);
 		void setSize(float width, float height, float near, float far);
 		void setPlanes(float near, float far);

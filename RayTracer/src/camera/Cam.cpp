@@ -1,10 +1,15 @@
 #include "Cam.h"
 
-Camera::Cam::Cam(float near, float far, float width, float height) : nearPlane(near), farPlane(far), size(width, height),
-	projection(1), inverseProjection(glm::inverse(projection)), view(1), inverseView(glm::inverse(view)), position(0),
+#include <float.h>
+
+Camera::Cam::Cam(float near, float far, float width, float height)
+	: nearPlane(near), farPlane(far), size(width, height),
+	projection(1), inverseProjection(glm::inverse(projection)),
+	view(1), inverseView(glm::inverse(view)), position(NAN),
 	lookAngles(Camera::Cam::LookAngles::fromFacing(glm::vec3(0))) {
 }
 
+#pragma region getter & setter
 const std::vector<Storage::Ray>& Camera::Cam::getRays() {
 	return rayCache;
 }
@@ -58,6 +63,7 @@ void Camera::Cam::setPosition(const glm::vec3& pos) {
 		return;
 	position = pos;
 
+	calculateProjection();
 	calculateView();
 	calculateRayCache();
 }
@@ -85,8 +91,29 @@ void Camera::Cam::setFacing(const glm::vec3& facing) {
 
 	lookAngles = Camera::Cam::LookAngles::fromFacing(facing);
 
+	calculateProjection();
 	calculateView();
 	calculateRayCache();
+}
+
+const glm::vec2& Camera::Cam::getSize() {
+	return size;
+}
+
+const glm::vec2& Camera::Cam::getSize() const {
+	return size;
+}
+
+const glm::vec2& Camera::Cam::getPlanes() {
+	static glm::vec2 ret(0, 0);
+	ret = glm::vec2(nearPlane, farPlane);
+	return ret;
+}
+
+const glm::vec2& Camera::Cam::getPlanes() const {
+	static glm::vec2 ret(0, 0);
+	ret = glm::vec2(nearPlane, farPlane);
+	return ret;
 }
 
 void Camera::Cam::setSize(float width, float height) {
@@ -96,6 +123,7 @@ void Camera::Cam::setSize(float width, float height) {
 	size = nextSize;
 
 	calculateProjection();
+	calculateView();
 	calculateRayCache();
 }
 
@@ -118,14 +146,19 @@ void Camera::Cam::setPlanes(float near, float far) {
 	nearPlane = near;
 	farPlane = far;
 
+	calculateProjection();
 	calculateView();
 	calculateRayCache();
 }
+#pragma endregion
 
 const Camera::Cam::LookAngles Camera::Cam::LookAngles::fromFacing(const glm::vec3& facing) {
-	constexpr glm::vec3 fakeUp(0, 1, 0);
-	const glm::vec3 right = glm::cross(facing, fakeUp);
-	const glm::vec3 up = glm::cross(facing, right);
+	const glm::vec3 forward = glm::normalize(facing);
+	glm::vec3 fakeUp(0, 1, 0);
+	if (fakeUp == glm::abs(forward))
+		fakeUp = glm::vec3(1, 0, 0);
+	const glm::vec3 right = glm::cross(forward, fakeUp);
+	const glm::vec3 up = glm::cross(forward, right);
 
-	return {facing, up, right};
+	return {forward, up, right};
 }
